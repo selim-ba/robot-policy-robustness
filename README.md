@@ -15,6 +15,20 @@ Robots that learn from human demonstrations rely on their sensors being accurate
 - **Finding 2:** what hurts is the **jitter**, not the size of the error. If an error of the same size is held **constant** for the whole attempt, the robot solves **16 out of 30**, as many as with clean readings.
 - **Likely reason:** the controller looks at its last **two** position readings. When each reading is randomly off, the robot appears to move even when it is still, and that fake motion misleads it. A constant offset creates no fake motion. This explanation fits the data but is not proven.
 
+## The setup at a glance
+
+```mermaid
+flowchart LR
+    S["Simulator<br/>real world, untouched"] -- "camera image (clean)" --> P["Learned policy<br/>uses its last 2 readings"]
+    S -- "true position" --> N["Noise layer<br/>changes the position only"]
+    N -- "noisy position" --> P
+    P -- "action: where to move next" --> S
+    classDef noise fill:#FAECE7,stroke:#D85A30,color:#712B13
+    class N noise
+```
+
+The loop runs every step. With **jitter**, a robot standing still produces readings that jump from step to step, which looks like motion that doesn't exist. With a **constant offset**, the reading is wrong by the same amount each time, so it doesn't appear to move.
+
 ## Key terms
 
 | Term | Meaning here |
