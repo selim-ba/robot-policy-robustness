@@ -112,11 +112,24 @@ def plot(summary: pd.DataFrame, path: Path) -> None:
     print(f"[plot] {path}")
 
 
+def compare_paired(a: pd.DataFrame, b: pd.DataFrame, name_a: str, name_b: str) -> dict:
+    """Paired comparison of two conditions on shared env seeds (exact McNemar)."""
+    m = a.set_index("env_seed")[["success"]].join(
+        b.set_index("env_seed")[["success"]], lsuffix="_a", rsuffix="_b", how="inner")
+    a_only = int((m.success_a & ~m.success_b).sum())
+    b_only = int((~m.success_a & m.success_b).sum())
+    return {"condition_a": name_a, "condition_b": name_b, "n_paired": len(m),
+            "solved_a": int(m.success_a.sum()), "solved_b": int(m.success_b.sum()),
+            "only_a_solved": a_only, "only_b_solved": b_only,
+            "mcnemar_p": mcnemar_exact(a_only, b_only)}
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--main", type=Path, default=Path("results/main_paired.csv"))
     p.add_argument("--pilot", type=Path, default=Path("results/pilot_paired.csv"))
     p.add_argument("--out-dir", type=Path, default=Path("results"))
+    p.add_argument("--ablation", type=Path, default=Path("results/ablation_offset.csv"))
     args = p.parse_args()
 
     main_df = pd.read_csv(args.main)
@@ -132,6 +145,18 @@ def main():
     with pd.option_context("display.width", 200, "display.max_columns", None, "display.precision", 3):
         print(summary)
     plot(summary, args.out_dir / "success_vs_sigma.png")
+
+    if args.ablation.exists():
+        abl = pd.read_csv(args.ablation)
+        sigma = float(abl.sigma.iloc[0])
+        comps = pd.DataFrame([
+            compare_paired(abl, main_df[main_df.sigma == 0], f"offset sigma={sigma:g}", "clean"),
+            compare_paired(abl, main_df[main_df.sigma == sigma], f"offset sigma={sigma:g}", f"iid sigma={sigma:g}"),
+        ])
+        comps.to_csv(args.out_dir / "ablation_summary.csv", index=False)
+        with pd.option_context("display.width", 200, "display.max_columns", None, "display.precision", 3):
+            print("\n[ablation] constant offset vs. clean and vs. i.i.d. noise (paired on env seeds)")
+            print(comps)
 
 
 if __name__ == "__main__":

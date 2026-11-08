@@ -1,0 +1,3 @@
+condition_a,condition_b,n_paired,solved_a,solved_b,only_a_solved,only_b_solved,mcnemar_p
+offset sigma=8,clean,30,16,17,4,5,1.0
+offset sigma=8,iid sigma=8,30,16,5,13,2,0.00738525390625
