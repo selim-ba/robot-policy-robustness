@@ -118,3 +118,13 @@ def test_wrapper_noise_depends_only_on_env_seed():
 def test_wrapper_refuses_unseeded_noise():
     with pytest.raises(ValueError):
         make_vec(sigma=10.0).reset(seed=None)
+
+def test_offset_mode_is_constant_within_episode_and_resampled_per_seed():
+    env = NoisyAgentPos(gym.vector.SyncVectorEnv([FakePushT]), sigma=10.0, noise_type="offset")
+    obs, info = env.reset(seed=1000)
+    offset0 = obs["agent_pos"][0] - info["pos_agent"][0]
+    assert np.linalg.norm(offset0) > 0
+    obs, _, _, _, info = env.step(np.array([[200.0, 300.0]], dtype=np.float32))
+    assert np.allclose(obs["agent_pos"][0] - info["pos_agent"][0], offset0)  # same bias after moving
+    obs, info = env.reset(seed=1001)
+    assert not np.allclose(obs["agent_pos"][0] - info["pos_agent"][0], offset0)  # new episode, new bias

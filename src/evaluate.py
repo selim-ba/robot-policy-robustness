@@ -33,7 +33,7 @@ from perturbations import NoisyAgentPos
 SUCCESS_THRESHOLD = 0.95  # gym_pusht/envs/pusht.py: success_threshold, reward = clip(cov / 0.95, 0, 1)
 
 CSV_FIELDS = [
-    "condition", "sigma", "mode", "env_seed", "noise_seed", "episode_index", "success",
+    "condition", "sigma", "noise_type","mode", "env_seed", "noise_seed", "episode_index", "success",
     "final_coverage_capped", "max_coverage_capped", "sum_reward", "max_reward", "episode_steps",
     "runtime_seconds", "lerobot_version", "checkpoint",
 ]
@@ -43,8 +43,8 @@ OWN_ARGS: argparse.Namespace | None = None
 class EvalEnv(NoisyAgentPos):
     """NoisyAgentPos + per-episode record of coverage (derived from reward) and step count. Batch size 1."""
 
-    def __init__(self, env, sigma: float, noise_seed: int, pos_key: str):
-        super().__init__(env, sigma=sigma, noise_seed=noise_seed, pos_key=pos_key)
+    def __init__(self, env, sigma: float, noise_seed: int, pos_key: str, noise_type: str = "iid"):
+        super().__init__(env, sigma=sigma, noise_seed=noise_seed, pos_key=pos_key, noise_type=noise_type)
         self.episodes: list[dict] = []
 
     def reset(self, *, seed=None, options=None):
@@ -106,7 +106,8 @@ def build_components(cfg: EvalPipelineConfig):
 
 def run_condition(cfg, components, sigma: float, own) -> list[dict]:
     vec_env, policy, env_pre, env_post, pre, post = components
-    env = EvalEnv(vec_env, sigma=sigma, noise_seed=own.noise_seed, pos_key=own.pos_key)
+    env = EvalEnv(vec_env, sigma=sigma, noise_seed=own.noise_seed, pos_key=own.pos_key,
+                noise_type=own.noise_type)
     common = dict(env=env, policy=policy, env_preprocessor=env_pre, env_postprocessor=env_post,
                   preprocessor=pre, postprocessor=post)
     seeds = list(range(cfg.seed, cfg.seed + cfg.eval.n_episodes))
@@ -136,7 +137,8 @@ def run_condition(cfg, components, sigma: float, own) -> list[dict]:
     rows = []
     for idx, (res, rec, rt) in enumerate(zip(results, env.episodes, runtimes)):
         rows.append({
-            "condition": f"agent_pos_noise_sigma_{sigma:g}", "sigma": sigma, "mode": own.mode,
+            "condition": f"agent_pos_{own.noise_type}_sigma_{sigma:g}", "sigma": sigma,
+            "noise_type": own.noise_type, "mode": own.mode,
             "env_seed": rec["env_seed"], "noise_seed": own.noise_seed, "episode_index": idx,
             "success": bool(res["success"]),
             "final_coverage_capped": rec["final_coverage_capped"],
@@ -185,6 +187,7 @@ if __name__ == "__main__":
     p.add_argument("--n-videos", type=int, default=0, help="render the first N episodes per condition (paired mode)")
     p.add_argument("--pos-key", default="observation.state",
                    help="observation key holding the raw 2D agent position (LeRobot env naming)")
+    p.add_argument("--noise-type", choices=["iid", "offset"], default="iid")
     OWN_ARGS, remaining = p.parse_known_args()
     sys.argv = [sys.argv[0], *remaining]  # leave only LeRobot's own args for its parser
     main()

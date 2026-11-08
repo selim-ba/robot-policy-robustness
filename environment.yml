@@ -1,0 +1,7 @@
+name: robot-bench
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - ffmpeg
+prefix: /Users/selimbenabdallah/miniforge3/envs/robot-bench
