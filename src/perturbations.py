@@ -1,7 +1,7 @@
 """Observation perturbations for robustness evaluation on PushT.
 
-Only the agent-facing 2D position (obs["agent_pos"]) is perturbed. Pixels, the
-simulator state, rewards, success and `info` are never modified.
+Only the agent-facing 2D position is perturbed. Pixels, the simulator state,
+rewards, success and `info` are never modified.
 """
 from __future__ import annotations
 
@@ -35,19 +35,27 @@ def add_position_noise(
 
 
 class NoisyAgentPos(gym.vector.VectorObservationWrapper):
-    """Add Gaussian noise to obs["agent_pos"] of a vector env, at reset and at every step.
+    """Add Gaussian noise to the agent-position entry of a vector env's observations,
+    at reset and at every step.
 
     Each sub-env gets its own RNG, re-seeded at every reset from (noise_seed, env_seed).
     An episode's noise sequence therefore depends only on its env seed (not on earlier
     episodes) and never touches torch's global RNG used by diffusion sampling.
     """
 
-    def __init__(self, env: gym.vector.VectorEnv, sigma: float, noise_seed: int = 0):
+    def __init__(
+        self,
+        env: gym.vector.VectorEnv,
+        sigma: float,
+        noise_seed: int = 0,
+        pos_key: str = "agent_pos",
+    ):
         super().__init__(env)
         if sigma < 0:
             raise ValueError(f"sigma must be >= 0, got {sigma}")
         self.sigma = float(sigma)
         self.noise_seed = int(noise_seed)
+        self.pos_key = pos_key
         self._rngs: list[np.random.Generator | None] | None = None
         self.last_clean_pos: np.ndarray | None = None  # for tests / debugging
         self.last_noisy_pos: np.ndarray | None = None
@@ -69,9 +77,12 @@ class NoisyAgentPos(gym.vector.VectorObservationWrapper):
     def observations(self, observations: dict) -> dict:
         if self._rngs is None:
             raise RuntimeError("reset() must be called before stepping")
-        clean = np.asarray(observations["agent_pos"])  # shape (num_envs, 2)
+        if self.pos_key not in observations:
+            layout = {k: getattr(v, "shape", type(v).__name__) for k, v in observations.items()}
+            raise KeyError(f"{self.pos_key!r} not in observations; got {layout}")
+        clean = np.asarray(observations[self.pos_key])  # shape (num_envs, 2)
         noisy = np.stack(
             [add_position_noise(clean[i], self.sigma, self._rngs[i]) for i in range(self.num_envs)]
         )
         self.last_clean_pos, self.last_noisy_pos = clean.copy(), noisy.copy()
-        return {**observations, "agent_pos": noisy}
+        return {**observations, self.pos_key: noisy}

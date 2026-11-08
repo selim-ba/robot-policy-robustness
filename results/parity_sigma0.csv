@@ -1,0 +1,11 @@
+condition,sigma,mode,env_seed,noise_seed,episode_index,success,final_coverage,max_coverage,sum_reward,max_reward,episode_steps,runtime_seconds,lerobot_version,checkpoint
+agent_pos_noise_sigma_0,0.0,parity,1000,0,0,True,nan,0.0,45.985389709472656,1.0,129,nan,0.7.0,checkpoints/diffusion_pusht_migrated
+agent_pos_noise_sigma_0,0.0,parity,1001,0,1,False,nan,0.0,1.4546751976013184,0.053409624844789505,300,nan,0.7.0,checkpoints/diffusion_pusht_migrated
+agent_pos_noise_sigma_0,0.0,parity,1002,0,2,True,nan,0.0,201.35581970214844,1.0,257,nan,0.7.0,checkpoints/diffusion_pusht_migrated
+agent_pos_noise_sigma_0,0.0,parity,1003,0,3,True,nan,0.0,115.95181274414062,1.0,159,nan,0.7.0,checkpoints/diffusion_pusht_migrated
+agent_pos_noise_sigma_0,0.0,parity,1004,0,4,True,nan,0.0,55.41606903076172,1.0,152,nan,0.7.0,checkpoints/diffusion_pusht_migrated
+agent_pos_noise_sigma_0,0.0,parity,1005,0,5,False,nan,0.0,136.5545196533203,0.979361891746521,300,nan,0.7.0,checkpoints/diffusion_pusht_migrated
+agent_pos_noise_sigma_0,0.0,parity,1006,0,6,True,nan,0.0,88.01616668701172,1.0,176,nan,0.7.0,checkpoints/diffusion_pusht_migrated
+agent_pos_noise_sigma_0,0.0,parity,1007,0,7,True,nan,0.0,63.696136474609375,1.0,127,nan,0.7.0,checkpoints/diffusion_pusht_migrated
+agent_pos_noise_sigma_0,0.0,parity,1008,0,8,True,nan,0.0,91.58173370361328,1.0,224,nan,0.7.0,checkpoints/diffusion_pusht_migrated
+agent_pos_noise_sigma_0,0.0,parity,1009,0,9,True,nan,0.0,45.10111999511719,1.0,136,nan,0.7.0,checkpoints/diffusion_pusht_migrated
