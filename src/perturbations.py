@@ -4,7 +4,7 @@ Only the agent-facing 2D position is perturbed. Pixels, the simulator state,
 rewards, success and `info` are never modified.
 
 Noise types (same per-step marginal error N(0, sigma^2) per coordinate):
-  iid    : fresh noise at every observation (sensor jitter)
+  iid    : fresh noise at every observation (white measurement noise)
   offset : one draw per episode, held constant (calibration bias; no fake velocity)
 """
 from __future__ import annotations

@@ -5,14 +5,14 @@ Robots that learn from human demonstrations rely on their sensors being accurate
 ![The same starting situation, three times: clean position readings (left), small noise (middle), larger noise (right)](media/seed1000_sigma_0_12_32.gif)
 
 *The same starting situation, three times. Left: clean readings, task solved. Middle and right: the robot's position reading is perturbed by about 2 and 6 image pixels, and the task fails within the time limit.*
-<!-- TODO(Selim): one sentence on what the robot visibly does in the noisy panels (jittery / drifting / hesitant). -->
+<!-- TODO(Selim): one sentence on what the robot visibly does in the noisy panels (twitching / drifting / hesitant). -->
 
 ## In one minute
 
 - **The setup:** a simulated robot (the blue circle) must push a T-shaped block onto a target outline. It is controlled by a publicly available AI model that learned the task by imitating human demonstrations. It sees a camera image and its own position, and decides where to move next.
 - **The experiment:** I add small random errors to the position the robot *reads*. The camera image and the real physics stay untouched. Every test uses the same 30 starting situations, so the only thing that changes is the error.
 - **Finding 1:** errors smaller than one image pixel have no measurable effect. At about 1.5 pixels, the number of solved tasks drops from **17 out of 30 to 5 out of 30**.
-- **Finding 2:** what hurts is the **jitter**, not the size of the error. If an error of the same size is held **constant** for the whole attempt, the robot solves **16 out of 30**, as many as with clean readings.
+- **Finding 2:** what hurts is that the error **changes at every step**, not its size. If an error of the same size is held **constant** for the whole attempt, the robot solves **16 out of 30**, as many as with clean readings.
 - **Likely reason:** the controller looks at its last **two** position readings. When each reading is randomly off, the robot appears to move even when it is still, and that fake motion misleads it. A constant offset creates no fake motion. This explanation fits the data but is not proven.
 
 ## The setup at a glance
@@ -27,7 +27,7 @@ flowchart LR
     class N noise
 ```
 
-The loop runs every step. With **jitter**, a robot standing still produces readings that jump from step to step, which looks like motion that doesn't exist. With a **constant offset**, the reading is wrong by the same amount each time, so it doesn't appear to move.
+The loop runs every step. With **random noise**, a new error is drawn at every step, so a robot standing still produces readings that jump around, which looks like motion that doesn't exist. With a **constant offset**, the reading is wrong by the same amount each time, so it doesn't appear to move.
 
 ## Key terms
 
@@ -37,13 +37,13 @@ The loop runs every step. With **jitter**, a robot standing still produces readi
 | **Diffusion Policy** | The type of model used. It plans the next 16 moves at once, executes 8, then re-plans. |
 | **PushT** | The simulated task: push a T-shaped block so it covers at least 95% of a target outline, within 300 steps. |
 | **Noise level σ** | The typical size of the error added to the position reading, in the simulator's units. The workspace is 512 units wide, and the robot's camera image is 96 pixels wide, so **1 pixel ≈ 5.3 units**. |
-| **Jitter vs. offset** | Jitter: a new random error at every step. Offset: one random error drawn at the start and kept for the whole attempt. Both have the same typical size. |
+| **Random noise vs. constant offset** | Random noise: a new, independent error at every step (white measurement noise). Constant offset: one random error drawn at the start and kept for the whole attempt (a bias). Both have the same typical size. |
 | **Paired comparison** | Each condition is run on the same 30 starting situations, and the comparison is made situation by situation. |
 | **95% CI / p-value** | The CI is the range the true success rate plausibly lies in, given only 30 attempts. A p-value below 0.05 means the difference is unlikely to be chance. |
 
 ## Results
 
-### More jitter, fewer solved tasks
+### More noise, fewer solved tasks
 
 ![Share of tasks solved vs. noise level](results/success_vs_sigma.png)
 
@@ -58,13 +58,13 @@ The loop runs every step. With **jitter**, a robot standing still produces readi
 
 *Pilot rows are a smaller, exploratory run on the first 10 starting situations.*
 
-### Jitter vs. constant offset (same error size, σ = 8)
+### Random noise vs. constant offset (same error size, σ = 8)
 
 | Condition | Tasks solved |
 |---|---|
 | Clean | 17 / 30 |
 | Constant offset | 16 / 30, not different from clean (p = 1.00) |
-| Jitter | 5 / 30, clearly worse than the offset (p = 0.007) |
+| Random noise | 5 / 30, clearly worse than the offset (p = 0.007) |
 
 <details>
 <summary>Full statistics</summary>
@@ -80,7 +80,7 @@ Success rates with 95% Wilson intervals, mean final target coverage (capped at 0
 | 12 (pilot) | 0/10 | 0–28% | 7 / 0 | 0.016 | 0.28 |
 | 32 (pilot) | 0/10 | 0–28% | 7 / 0 | 0.016 | 0.06 |
 
-Offset (σ = 8) vs. clean: 4 situations solved only with the offset, 5 only when clean (p = 1.00). Offset vs. jitter: 13 solved only with the offset, 2 only with jitter (p = 0.007). Mean coverage with the offset: 0.84.
+Offset (σ = 8) vs. clean: 4 situations solved only with the offset, 5 only when clean (p = 1.00). Offset vs. random noise: 13 solved only with the offset, 2 only with random noise (p = 0.007). Mean coverage with the offset: 0.84.
 
 Across the four main comparisons, σ = 8 stays significant after a Bonferroni correction (0.008 < 0.05 / 4).
 
